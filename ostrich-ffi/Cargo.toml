@@ -1,0 +1,28 @@
+[package]
+name = "ostrich-ffi"
+version = "0.1.0"
+authors = ["eycorsican <eric.y.corsican@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "ostrich"
+path = "src/lib.rs"
+crate-type = ["staticlib", "dylib"]
+
+[features]
+default = [
+    "default-ring",
+]
+
+default-ring = [
+    "ostrich/default-ring",
+]
+
+default-openssl = [
+    "ostrich/default-openssl",
+]
+
+auto-reload = ["ostrich/auto-reload"]
+
+[dependencies]
+ostrich = { path = "../ostrich", default-features = false, optional = true }

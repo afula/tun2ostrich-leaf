@@ -1,0 +1,211 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+            #          - windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: install rust toolchain
+        uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+
+      - name: test ostrich
+        run: cargo test -p ostrich
+
+  build-bin-cross:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - mips-unknown-linux-musl
+          - mipsel-unknown-linux-musl
+          - x86_64-unknown-linux-musl
+          - i686-unknown-linux-musl
+          - aarch64-unknown-linux-musl
+          - arm-unknown-linux-musleabi
+          - armv7-unknown-linux-musleabihf
+          - x86_64-pc-windows-gnu
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: install rust toolchain
+        uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+
+      - name: install deps
+        run: |
+          sudo apt update && sudo apt install llvm-dev libclang-dev clang libssl-dev pkg-config protobuf-compiler make -y
+
+      - name: install cross
+        run: |
+          cargo install cross
+
+      - name: build
+        run: |
+          export CFG_COMMIT_HASH=`git log --pretty=format:'%h' -n 1`
+          export CFG_COMMIT_DATE=`git log --format="%ci" -n 1`
+          ./scripts/build_cross.sh ${{ matrix.target }}
+
+      - name: rename and compress artifacts
+        if: ${{ matrix.target == 'x86_64-pc-windows-gnu' }}
+        run: |
+          mv target/${{ matrix.target }}/release/ostrich.exe ostrich-${{ matrix.target }}.exe
+
+      - name: rename and compress artifacts
+        if: ${{ matrix.target != 'x86_64-pc-windows-gnu' }}
+        run: |
+          mv target/${{ matrix.target }}/release/ostrich ostrich-${{ matrix.target }}
+
+      - name: upload assets
+        if: ${{ matrix.target == 'x86_64-pc-windows-gnu' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: ostrich-${{ matrix.target }}.exe
+          path: ostrich-${{ matrix.target }}.exe
+
+      - name: upload assets
+        if: ${{ matrix.target != 'x86_64-pc-windows-gnu' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: ostrich-${{ matrix.target }}
+          path: ostrich-${{ matrix.target }}
+
+  build-bin-local:
+    strategy:
+      matrix:
+        os: [macos-latest]
+        include:
+          - os: macos-latest
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: show last commit
+        run: |
+          git show --summary
+
+      - name: install rust toolchain
+        uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+
+      - name: install llvm
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew update && brew install llvm protobuf
+
+      - name: build
+        run: |
+          export CFG_COMMIT_HASH=`git log --pretty=format:'%h' -n 1`
+          export CFG_COMMIT_DATE=`git log --format="%ci" -n 1`
+          cargo build --release --target ${{ matrix.target }} -p ostrich-bin
+
+      - name: rename and compress artifacts
+        run: |
+          mv target/${{ matrix.target }}/release/ostrich ostrich-${{ matrix.target }}
+
+      - name: upload assets
+        uses: actions/upload-artifact@v2
+        with:
+          name: ostrich-${{ matrix.target }}
+          path: ostrich-${{ matrix.target }}
+
+  build-apple:
+    runs-on: macos-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: install rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+
+      - name: install toolchain
+        run: |
+          cargo install cbindgen
+          brew update && brew install llvm unzip protobuf
+
+      - name: build
+        run: |
+          ./scripts/build_apple_xcframework.sh
+
+      - name: zip artifacts
+        run: |
+          mv target/apple/release/ostrich.xcframework .
+          zip -r ostrich.xcframework.zip ostrich.xcframework
+
+      - name: upload assets
+        uses: actions/upload-artifact@v2
+        with:
+          name: ostrich.xcframework.zip
+          path: ostrich.xcframework.zip
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: install rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
+
+      - name: install toolchain
+        run: |
+          cargo install cbindgen
+          apt update && apt install -y make llvm-dev libclang-dev clang pkg-config unzip curl default-jdk build-essential
+          export ANDROID_HOME=/tmp/Android/sdk
+          export NDK_HOME=/tmp/Android/sdk/ndk/25.2.9519653
+          export PATH=$ANDROID_HOME/cmdline-tools/bin:$PATH
+          cd /tmp/
+          curl -OL https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip
+          unzip commandlinetools-linux-6858069_latest.zip
+          mkdir -p $ANDROID_HOME
+          mv cmdline-tools $ANDROID_HOME
+          yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
+          sdkmanager --sdk_root=$ANDROID_HOME "ndk;25.2.9519653" "platforms;android-21"
+
+      - name: build
+        run: |
+          export ANDROID_HOME=/tmp/Android/sdk
+          export NDK_HOME=/tmp/Android/sdk/ndk/25.2.9519653
+          ./scripts/build_android.sh
+
+      - name: zip artifacts
+        run: |
+          mv target/ostrich-android-libs .
+          zip -r ostrich-android-libs.zip ostrich-android-libs
+
+      - name: upload assets
+        uses: actions/upload-artifact@v2
+        with:
+          name: ostrich-android-libs.zip
+          path: ostrich-android-libs.zip
