@@ -86,6 +86,10 @@ fn main() {
         }
     }
     let path = std::env::current_dir().unwrap();
+    #[cfg(target_os = "windows")]
+    let wintun_path = "C:\\Users\\nancy\\.ostrichConfig\\wintun.dll";
+    #[cfg(target_os = "windows")]
+    let tun2socks_path = "C:\\Users\\nancy\\.ostrichConfig\\tun2socks.exe";
     #[cfg(target_os = "linux")]
     let tun2socks_path = format!(
         "{}/assets/linux/tun2socks",
@@ -135,13 +139,10 @@ fn main() {
     if let Err(e) = ostrich::util::run_with_options(
         // 0,
         args.config,
-        tun2socks_path,
-        #[cfg(feature = "auto-reload")]
-        args.auto_reload,
-        !args.single_thread,
-        true,
-        0, // auto_threads is true, this value no longer matters
-        args.thread_stack_size,
+        #[cfg(target_os = "windows")]
+        wintun_path.to_string(),
+        #[cfg(target_os = "windows")]
+        tun2socks_path.to_owned(),
     ) {
         println!("start ostrich failed: {}", e);
         exit(1);

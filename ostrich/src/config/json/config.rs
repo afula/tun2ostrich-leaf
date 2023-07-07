@@ -926,7 +926,7 @@ pub fn to_internal(json: &mut Config) -> Result<internal::Config> {
         }
     }
 
-    let mut router = protobuf::MessageField::none();
+    let mut router: protobuf::MessageField<internal::Router> = protobuf::MessageField::none();
     if let Some(ext_router) = json.router.as_mut() {
         let mut int_router = internal::Router::new();
         let mut rules = Vec::new();

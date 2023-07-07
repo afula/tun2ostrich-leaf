@@ -17,56 +17,34 @@ use crate::{
 
 fn get_start_options(
     config_path: String,
-    #[cfg(feature = "auto-reload")] auto_reload: bool,
-    multi_thread: bool,
-    auto_threads: bool,
-    threads: usize,
-    stack_size: usize,
+    #[cfg(target_os = "android")] socket_protect_path: Option<String>,
 ) -> crate::StartOptions {
-    if !multi_thread {
-        return crate::StartOptions {
-            config: crate::Config::File(config_path),
-            #[cfg(feature = "auto-reload")]
-            auto_reload,
-            runtime_opt: crate::RuntimeOption::SingleThread,
-        };
-    }
-    if auto_threads {
-        return crate::StartOptions {
-            config: crate::Config::File(config_path),
-            #[cfg(feature = "auto-reload")]
-            auto_reload,
-            runtime_opt: crate::RuntimeOption::MultiThreadAuto(stack_size),
-        };
-    }
     crate::StartOptions {
         config: crate::Config::File(config_path),
-        #[cfg(feature = "auto-reload")]
-        auto_reload,
-        runtime_opt: crate::RuntimeOption::MultiThread(threads, stack_size),
+        #[cfg(target_os = "android")]
+        socket_protect_path,
     }
 }
 
 pub fn run_with_options(
     // rt_id: crate::RuntimeId,
     config_path: String,
-    tun2socks_path: String,
-    #[cfg(feature = "auto-reload")] auto_reload: bool,
-    multi_thread: bool,
-    auto_threads: bool,
-    threads: usize,
-    stack_size: usize,
+    #[cfg(target_os = "android")] socket_protect_path: Option<String>,
+    #[cfg(target_os = "windows")] wintun_path: String,
+    #[cfg(target_os = "windows")] tun2socks_path: String,
 ) -> Result<(), crate::Error> {
-    let opts = get_start_options(
+    let opts: crate::StartOptions = get_start_options(
         config_path,
-        #[cfg(feature = "auto-reload")]
-        auto_reload,
-        multi_thread,
-        auto_threads,
-        threads,
-        stack_size,
+        #[cfg(target_os = "android")]
+        socket_protect_path,
     );
-    crate::start(opts, tun2socks_path)
+    crate::start(
+        opts,
+        #[cfg(target_os = "windows")]
+        wintun_path,
+        #[cfg(target_os = "windows")]
+        tun2socks_path,
+    )
 }
 
 async fn test_tcp_outbound(

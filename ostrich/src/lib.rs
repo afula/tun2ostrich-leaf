@@ -102,8 +102,6 @@ impl RuntimeManager {
         dns_client: Arc<RwLock<DnsClient>>,
         outbound_manager: Arc<RwLock<OutboundManager>>,
         #[cfg(feature = "stat")] stat_manager: SyncStatManager,
-        #[cfg(target_os = "windows")] wintun_path: String,
-        #[cfg(target_os = "windows")] tun2socks_path: String,
     ) -> Arc<Self> {
         Arc::new(Self {
             #[cfg(feature = "auto-reload")]
@@ -316,27 +314,14 @@ pub fn test_config(config_path: &str) -> Result<(), Error> {
         .map_err(Error::Config)
 }
 
-fn new_runtime(opt: &RuntimeOption) -> Result<tokio::runtime::Runtime, Error> {
-    match opt {
-        RuntimeOption::SingleThread => tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .map_err(Error::Io),
-        RuntimeOption::MultiThreadAuto(stack_size) => tokio::runtime::Builder::new_multi_thread()
-            .thread_stack_size(*stack_size)
-            .enable_all()
-            .build()
-            .map_err(Error::Io),
-        RuntimeOption::MultiThread(worker_threads, stack_size) => {
-            tokio::runtime::Builder::new_multi_thread()
-                .worker_threads(*worker_threads)
-                .thread_stack_size(*stack_size)
-                .enable_all()
-                .build()
-                .map_err(Error::Io)
-        }
-    }
+fn new_runtime() -> Result<tokio::runtime::Runtime, Error> {
+    tokio::runtime::Builder::new_multi_thread()
+        // .thread_stack_size(*stack_size)
+        .enable_all()
+        .build()
+        .map_err(Error::Io)
 }
+
 // #[cfg(debug_assertions)]
 pub fn default_thread_stack_size() -> usize {
     2 * 1024 * 1024
@@ -362,18 +347,14 @@ pub enum Config {
 pub struct StartOptions {
     // The path of the config.
     pub config: Config,
-    // Enable auto reload, take effect only when "auto-reload" feature is enabled.
-    #[cfg(feature = "auto-reload")]
-    pub auto_reload: bool,
-    // Tokio runtime options.
-    pub runtime_opt: RuntimeOption,
+    #[cfg(target_os = "android")]
+    pub socket_protect_path: Option<String>,
 }
-
 pub fn start(
     opts: StartOptions,
-    #[cfg(target_os = "windows")] mut ipset: Vec<String>,
+    // #[cfg(target_os = "windows")] mut ipset: Vec<String>,
     #[cfg(target_os = "windows")] wintun_path: String,
-    // #[cfg(target_os = "windows")]
+    #[cfg(target_os = "windows")]
     tun2socks_path: String,
 ) -> Result<(), Error> {
     #[cfg(debug_assertions)]
@@ -395,7 +376,7 @@ pub fn start(
 
     app::logger::setup_logger(&config.log)?;
 
-    let rt = new_runtime(&opts.runtime_opt)?;
+    let rt = new_runtime()?;
     let _g = rt.enter();
 
     let mut tasks: Vec<Runner> = Vec::new();
@@ -404,6 +385,18 @@ pub fn start(
     let dns_client = Arc::new(RwLock::new(
         DnsClient::new(&config.dns).map_err(Error::Config)?,
     ));
+
+    let mut ipset = Vec::from(config.dns.servers.clone());
+    for (_, ips) in &config.dns.hosts {
+        ipset.append(&mut ips.values.to_owned())
+    }
+
+
+//    config.router.rules[0].ip_cidrs.into_iter() 
+        ipset.append(&mut config.router.rules[0].ip_cidrs.to_owned());
+
+
+
     let outbound_manager = Arc::new(RwLock::new(
         OutboundManager::new(&config.outbounds, dns_client.clone()).map_err(Error::Config)?,
     ));
@@ -441,7 +434,7 @@ pub fn start(
         ipset.clone(),
         #[cfg(target_os = "windows")]
         wintun_path,
-        // #[cfg(target_os = "windows")]
+        #[cfg(target_os = "windows")]
         tun2socks_path,
     )
     .map_err(Error::Config)?;

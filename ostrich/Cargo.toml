@@ -230,8 +230,7 @@ notify = { version = "5.0.0-pre.13", optional = true }
 
 
 if-watch = {git = "https://github.com/mxinden/if-watch.git",features = ["smol"]}
-signal-hook = "0.3.13"
-signal-hook-tokio = {version = "0.3.1", features = ["futures-v0_3"]}
+
 local-ip-address = "0.5.3"
 
 [target.'cfg(target_os = "android")'.dependencies]
@@ -241,6 +240,8 @@ jni = "0.21"
 [target.'cfg(any(target_os = "ios", target_os = "android", target_os = "macos", target_os = "linux"))'.dependencies]
 tun = { git = "https://github.com/eycorsican/rust-tun.git", branch = "fork", features = ["async"], optional = true }
 netstack-lwip = { git = "https://github.com/eycorsican/netstack-lwip.git", optional = true }
+signal-hook = "0.3.13"
+signal-hook-tokio = {version = "0.3.1", features = ["futures-v0_3"]}
 
 [target.'cfg(any(target_os = "macos", target_os = "linux"))'.dependencies]
 pnet_datalink = { version = "0.28", package = "pnet_datalink" }
@@ -255,7 +256,7 @@ tikv-jemallocator = "0.5"
 #allocator
 [target.'cfg(target_env = "msvc")'.dependencies]
 rpmalloc = { version = "0.2.0", features = ["guards", "statistics","unlimited_cache", "unlimited_global_cache", "unlimited_thread_cache"] }
-
+ipconfig = {git = "https://github.com/liranringel/ipconfig.git"}
 [dev-dependencies]
 rcgen = "0.8"
 sha2 = "0.9"

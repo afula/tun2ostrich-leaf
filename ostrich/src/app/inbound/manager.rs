@@ -71,7 +71,7 @@ impl InboundManager {
         nat_manager: Arc<NatManager>,
         #[cfg(target_os = "windows")] mut ipset: Vec<String>,
         #[cfg(target_os = "windows")] wintun_path: String,
-        // #[cfg(target_os = "windows")]
+        #[cfg(target_os = "windows")]
         tun2socks_path: String,
     ) -> Result<Self> {
         let mut handlers: HashMap<String, AnyInboundHandler> = HashMap::new();
@@ -99,6 +99,7 @@ impl InboundManager {
                         let ipset = ipset.clone();
 
                         tokio::spawn(async move {
+                            println!("tun2socks path: {}", tun2socks_path.as_str());
                             let _ = Command::new(tun2socks_path.as_str())
                                 .arg("-device")
                                 .arg("tun://utun233")
@@ -106,7 +107,7 @@ impl InboundManager {
                                 .arg("socks5://127.0.0.1:1086")
                                 // flag.StringVar(&key.LogLevel, "loglevel", "info", "Log level [debug|info|warning|error|silent]")
                                 .arg("-loglevel")
-                                .arg("silent")
+                                .arg("info")
                                 .spawn()
                                 .expect("failed to execute process");
                             println!("init tun device process finished");
