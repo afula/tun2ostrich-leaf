@@ -374,7 +374,7 @@ pub fn start(
         Config::Internal(c) => c,
     };
 
-    app::logger::setup_logger(&config.log)?;
+    // app::logger::setup_logger(&config.log)?;
 
     let rt = new_runtime()?;
     let _g = rt.enter();
