@@ -354,8 +354,7 @@ pub fn start(
     opts: StartOptions,
     // #[cfg(target_os = "windows")] mut ipset: Vec<String>,
     #[cfg(target_os = "windows")] wintun_path: String,
-    #[cfg(target_os = "windows")]
-    tun2socks_path: String,
+    #[cfg(target_os = "windows")] tun2socks_path: String,
 ) -> Result<(), Error> {
     #[cfg(debug_assertions)]
     println!("start with options:\n{:#?}", opts);
@@ -391,11 +390,8 @@ pub fn start(
         ipset.append(&mut ips.values.to_owned())
     }
 
-
-//    config.router.rules[0].ip_cidrs.into_iter() 
-        ipset.append(&mut config.router.rules[0].ip_cidrs.to_owned());
-
-
+    //    config.router.rules[0].ip_cidrs.into_iter()
+    ipset.append(&mut config.router.rules[0].ip_cidrs.to_owned());
 
     let outbound_manager = Arc::new(RwLock::new(
         OutboundManager::new(&config.outbounds, dns_client.clone()).map_err(Error::Config)?,
