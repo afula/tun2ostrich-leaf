@@ -1,13 +1,11 @@
 use std::{
     convert::From,
-    sync::Arc,
 };
 use indexmap::{map::Values,IndexMap};
 use anyhow::{anyhow, Result};
 use futures::future::AbortHandle;
 use log::*;
 use protobuf::Message;
-use tokio::sync::RwLock;
 
 #[cfg(feature = "outbound-direct")]
 use crate::proxy::direct;

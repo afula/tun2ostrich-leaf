@@ -35,38 +35,12 @@ pub mod datagram;
 pub mod inbound;
 pub mod outbound;
 
-#[cfg(any(feature = "inbound-amux", feature = "outbound-amux"))]
-pub mod amux;
-#[cfg(any(feature = "inbound-chain", feature = "outbound-chain"))]
-pub mod chain;
 #[cfg(feature = "outbound-direct")]
 pub mod direct;
-#[cfg(feature = "outbound-drop")]
-pub mod drop;
-#[cfg(feature = "outbound-failover")]
-pub mod failover;
-#[cfg(feature = "inbound-http")]
-pub mod http;
-#[cfg(feature = "outbound-obfs")]
-pub mod obfs;
-#[cfg(any(feature = "inbound-quic", feature = "outbound-quic"))]
-pub mod quic;
-#[cfg(feature = "outbound-redirect")]
-pub mod redirect;
-#[cfg(feature = "outbound-select")]
-pub mod select;
-#[cfg(any(feature = "inbound-shadowsocks", feature = "outbound-shadowsocks"))]
-pub mod shadowsocks;
 #[cfg(any(feature = "inbound-socks", feature = "outbound-socks"))]
 pub mod socks;
-#[cfg(feature = "outbound-static")]
-pub mod r#static;
-#[cfg(feature = "outbound-tls")]
-pub mod tls;
 #[cfg(any(feature = "inbound-trojan", feature = "outbound-trojan"))]
 pub mod trojan;
-#[cfg(feature = "outbound-tryall")]
-pub mod tryall;
 #[cfg(all(
     feature = "inbound-tun",
     any(
@@ -77,10 +51,6 @@ pub mod tryall;
     )
 ))]
 pub mod tun;
-#[cfg(feature = "outbound-vmess")]
-pub mod vmess;
-#[cfg(any(feature = "inbound-ws", feature = "outbound-ws"))]
-pub mod ws;
 
 pub use datagram::{
     SimpleInboundDatagram, SimpleInboundDatagramRecvHalf, SimpleInboundDatagramSendHalf,

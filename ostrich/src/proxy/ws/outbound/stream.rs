@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::io;
 
 use async_trait::async_trait;
@@ -11,12 +11,12 @@ use crate::{proxy::*, session::Session};
 
 pub struct Handler {
     pub path: String,
-    pub headers: HashMap<String, String>,
+    pub headers: IndexMap<String, String>,
 }
 
 struct Request<'a> {
     pub uri: &'a str,
-    pub headers: &'a HashMap<String, String>,
+    pub headers: &'a IndexMap<String, String>,
 }
 
 impl<'a> tungstenite::client::IntoClientRequest for Request<'a> {
