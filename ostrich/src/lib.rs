@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use lazy_static::lazy_static;
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::io;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::sync_channel;
@@ -10,21 +10,11 @@ use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::sync::RwLock;
 
-#[cfg(feature = "auto-reload")]
-use notify::{
-    event, Error as NotifyError, RecommendedWatcher, RecursiveMode, Result as NotifyResult, Watcher,
-};
-
 use app::{
     dispatcher::Dispatcher, dns_client::DnsClient, inbound::manager::InboundManager,
     nat_manager::NatManager, outbound::manager::OutboundManager, router::Router,
 };
 
-#[cfg(feature = "stat")]
-use crate::app::{stat_manager::StatManager, SyncStatManager};
-
-#[cfg(feature = "api")]
-use crate::app::api::api_server::ApiServer;
 
 pub mod app;
 pub mod common;
@@ -121,73 +111,6 @@ impl RuntimeManager {
         })
     }
 
-    #[cfg(feature = "stat")]
-    pub fn stat_manager(&self) -> SyncStatManager {
-        self.stat_manager.clone()
-    }
-
-    pub async fn set_outbound_selected(&self, outbound: &str, select: &str) -> Result<(), Error> {
-        if let Some(selector) = self.outbound_manager.read().await.get_selector(outbound) {
-            selector
-                .write()
-                .await
-                .set_selected(select)
-                .map_err(Error::Config)
-        } else {
-            Err(Error::Config(anyhow!("selector not found")))
-        }
-    }
-
-    pub async fn get_outbound_selected(&self, outbound: &str) -> Result<String, Error> {
-        if let Some(selector) = self.outbound_manager.read().await.get_selector(outbound) {
-            return Ok(selector.read().await.get_selected_tag());
-        }
-        Err(Error::Config(anyhow!("not found")))
-    }
-
-    pub async fn get_outbound_selects(&self, outbound: &str) -> Result<Vec<String>, Error> {
-        if let Some(selector) = self.outbound_manager.read().await.get_selector(outbound) {
-            return Ok(selector.read().await.get_available_tags());
-        }
-        Err(Error::Config(anyhow!("not found")))
-    }
-
-    // This function could block by an in-progress connection dialing.
-    //
-    // TODO Reload FakeDns. And perhaps the inbounds as long as the listening
-    // addresses haven't changed.
-    pub async fn reload(&self) -> Result<(), Error> {
-        let config_path = if let Some(p) = self.config_path.as_ref() {
-            p
-        } else {
-            return Err(Error::NoConfigFile);
-        };
-        log::info!("reloading from config file: {}", config_path);
-        let mut config = config::from_file(config_path).map_err(Error::Config)?;
-        app::logger::setup_logger(&config.log)?;
-        self.router.write().await.reload(&mut config.router)?;
-        self.dns_client.write().await.reload(&config.dns)?;
-        self.outbound_manager
-            .write()
-            .await
-            .reload(&config.outbounds, self.dns_client.clone())
-            .await?;
-        log::info!("reloaded from config file: {}", config_path);
-        Ok(())
-    }
-
-    pub fn blocking_reload(&self) -> Result<(), Error> {
-        let tx = self.reload_tx.clone();
-        let (res_tx, res_rx) = sync_channel(0);
-        if let Err(e) = tx.blocking_send(res_tx) {
-            return Err(Error::AsyncChannelSend(e));
-        }
-        match res_rx.recv() {
-            Ok(res) => res,
-            Err(e) => Err(Error::SyncChannelRecv(e)),
-        }
-    }
-
     pub async fn shutdown(&self) -> bool {
         let tx = self.shutdown_tx.clone();
         if let Err(e) = tx.send(()).await {
@@ -205,97 +128,16 @@ impl RuntimeManager {
         }
         true
     }
-
-    #[cfg(feature = "auto-reload")]
-    pub(crate) fn new_watcher(&self) -> Result<(), Error> {
-        let config_path = if let Some(p) = self.config_path.as_ref() {
-            p
-        } else {
-            return Err(Error::NoConfigFile);
-        };
-        if self.auto_reload {
-            log::trace!("starting new watcher for config file: {}", config_path);
-            let rt_id = self.rt_id;
-            let mut watcher: RecommendedWatcher =
-                notify::recommended_watcher(move |res: NotifyResult<event::Event>| {
-                    match res {
-                        // FIXME Not sure what are the most appropriate events to
-                        // filter on different platforms.
-                        Ok(ev) => {
-                            match ev.kind {
-                                #[cfg(any(target_os = "macos", target_os = "ios"))]
-                                event::EventKind::Modify(event::ModifyKind::Data(
-                                    event::DataChange::Content,
-                                )) => {
-                                    log::info!("config file event matched: {:?}", ev);
-                                    if let Err(e) = reload() {
-                                        log::warn!("reload config file failed: {}", e);
-                                    }
-                                }
-                                #[cfg(any(target_os = "linux", target_os = "android"))]
-                                event::EventKind::Access(event::AccessKind::Close(
-                                    event::AccessMode::Write,
-                                ))
-                                | event::EventKind::Remove(event::RemoveKind::File) => {
-                                    log::info!("config file event matched: {:?}", ev);
-                                    if let Err(e) = reload() {
-                                        log::warn!("reload config file failed: {}", e);
-                                    }
-                                }
-                                #[cfg(target_os = "windows")]
-                                event::EventKind::Modify(event::ModifyKind::Data(
-                                    event::DataChange::Any,
-                                )) => {
-                                    log::info!("config file event matched: {:?}", ev);
-                                    if let Err(e) = reload() {
-                                        log::warn!("reload config file failed: {}", e);
-                                    }
-                                }
-                                _ => {
-                                    log::trace!("skip config file event: {:?}", ev);
-                                }
-                            }
-                            // The config file could somehow be removed and re-created
-                            // by an editor, in that case create a new watcher to watch
-                            // the new file.
-                            if let event::EventKind::Remove(event::RemoveKind::File) = ev.kind {
-                                if let Some(m) = RUNTIME_MANAGER.lock().unwrap().get(&rt_id) {
-                                    let _ = m.new_watcher();
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            log::error!("config file watch error: {:?}", e);
-                        }
-                    }
-                })
-                .map_err(Error::Watcher)?;
-            watcher
-                .watch(
-                    std::path::Path::new(&config_path),
-                    RecursiveMode::NonRecursive,
-                )
-                .map_err(Error::Watcher)?;
-            log::info!("watching changes of file: {}", config_path);
-            self.watcher.lock().unwrap().replace(watcher);
-        }
-        Ok(())
-    }
 }
 
 pub type RuntimeId = u16;
 const INSTANCE_ID: RuntimeId = 1;
 lazy_static! {
-    pub static ref RUNTIME_MANAGER: Mutex<HashMap<RuntimeId, Arc<RuntimeManager>>> =
-        Mutex::new(HashMap::new());
+    pub static ref RUNTIME_MANAGER: Mutex<IndexMap<RuntimeId, Arc<RuntimeManager>>> =
+        Mutex::new(IndexMap::new());
 }
 
-pub fn reload() -> Result<(), Error> {
-    if let Some(m) = RUNTIME_MANAGER.lock().unwrap().get(&INSTANCE_ID) {
-        return m.blocking_reload();
-    }
-    Err(Error::RuntimeManager)
-}
+
 
 pub fn shutdown() -> bool {
     if let Some(m) = RUNTIME_MANAGER.lock().unwrap().get(&INSTANCE_ID) {
@@ -849,22 +691,6 @@ pub fn start(
     }
 
     drop(config); // explicitly free the memory
-
-    // Monitor reload signal.
-    let rm = runtime_manager.clone();
-    tasks.push(Box::pin(async move {
-        loop {
-            if let Some(res_tx) = reload_rx.recv().await {
-                let res = rm.reload().await;
-                if let Err(e) = res_tx.send(res) {
-                    log::warn!("sending reload result failed: {}", e);
-                }
-            } else {
-                log::warn!("receiving none reload signal");
-            }
-        }
-    }));
-
     // The main task joining all runners.
     tasks.push(Box::pin(async move {
         futures::future::join_all(runners).await;

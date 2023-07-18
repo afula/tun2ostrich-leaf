@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -42,7 +42,7 @@ impl std::fmt::Display for UdpPacket {
     }
 }
 
-type SessionMap = HashMap<DatagramSource, (Sender<UdpPacket>, oneshot::Sender<bool>, Instant)>;
+type SessionMap = IndexMap<DatagramSource, (Sender<UdpPacket>, oneshot::Sender<bool>, Instant)>;
 
 pub struct NatManager {
     sessions: Arc<Mutex<SessionMap>>,
@@ -52,7 +52,7 @@ pub struct NatManager {
 
 impl NatManager {
     pub fn new(dispatcher: Arc<Dispatcher>) -> Self {
-        let sessions: Arc<Mutex<SessionMap>> = Arc::new(Mutex::new(HashMap::new()));
+        let sessions: Arc<Mutex<SessionMap>> = Arc::new(Mutex::new(IndexMap::new()));
         let sessions2 = sessions.clone();
 
         // The task is lazy, will not run until any sessions added.

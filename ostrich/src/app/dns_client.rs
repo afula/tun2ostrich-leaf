@@ -1,5 +1,6 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::net::{IpAddr, SocketAddr};
+use std::num::NonZeroUsize;
 use std::str::FromStr;
 use std::sync::{Arc, Weak};
 use std::time::{Duration, Instant};
@@ -30,7 +31,7 @@ struct CacheEntry {
 pub struct DnsClient {
     dispatcher: Option<Weak<Dispatcher>>,
     servers: Vec<SocketAddr>,
-    hosts: HashMap<String, Vec<IpAddr>>,
+    hosts: IndexMap<String, Vec<IpAddr>>,
     ipv4_cache: Arc<TokioMutex<LruCache<String, CacheEntry>>>,
     ipv6_cache: Arc<TokioMutex<LruCache<String, CacheEntry>>>,
 }
@@ -47,12 +48,12 @@ impl DnsClient {
         Ok(servers)
     }
 
-    fn load_hosts(dns: &crate::config::Dns) -> HashMap<String, Vec<IpAddr>> {
-        let mut hosts = HashMap::new();
+    fn load_hosts(dns: &crate::config::Dns) -> IndexMap<String, Vec<IpAddr>> {
+        let mut hosts = IndexMap::new();
         for (name, ips) in dns.hosts.iter() {
             hosts.insert(name.to_owned(), ips.values.to_vec());
         }
-        let mut parsed_hosts = HashMap::new();
+        let mut parsed_hosts = IndexMap::new();
         for (name, static_ips) in hosts.iter() {
             let mut ips = Vec::new();
             for ip in static_ips {
@@ -74,10 +75,10 @@ impl DnsClient {
         let servers = Self::load_servers(dns)?;
         let hosts = Self::load_hosts(dns);
         let ipv4_cache = Arc::new(TokioMutex::new(LruCache::<String, CacheEntry>::new(
-            *option::DNS_CACHE_SIZE,
+            NonZeroUsize::new(*option::DNS_CACHE_SIZE).unwrap(),
         )));
         let ipv6_cache = Arc::new(TokioMutex::new(LruCache::<String, CacheEntry>::new(
-            *option::DNS_CACHE_SIZE,
+            NonZeroUsize::new(*option::DNS_CACHE_SIZE).unwrap(),
         )));
 
         Ok(Self {

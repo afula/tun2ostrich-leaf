@@ -3,7 +3,7 @@ members = [
     "ostrich",
     "ostrich-bin",
     "ostrich-ffi",
-    "ostrich-plugins/shadowsocks",
+    # "ostrich-plugins/shadowsocks",
 ]
 default-members = ["ostrich-bin"]
 

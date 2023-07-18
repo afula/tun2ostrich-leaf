@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::sync::Arc;
 
 use anyhow::anyhow;
@@ -420,7 +420,7 @@ pub struct Router {
 
 impl Router {
     fn load_rules(rules: &mut Vec<Rule>, routing_rules: &mut Vec<config::router::Rule>) {
-        let mut mmdb_readers: HashMap<String, Arc<maxminddb::Reader<Mmap>>> = HashMap::new();
+        let mut mmdb_readers: IndexMap<String, Arc<maxminddb::Reader<Mmap>>> = IndexMap::new();
         for rr in routing_rules.iter_mut() {
             let mut cond_and = ConditionAnd::new();
 

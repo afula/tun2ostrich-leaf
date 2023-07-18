@@ -4,10 +4,10 @@ use std::io::Write;
 use std::sync::{Arc, Mutex};
 // use std::net::SocketAddr;
 use crate::config::TrojanOutboundSettings;
-use rustls;
-use rustls::{OwnedTrustAnchor, RootCertStore, ALL_VERSIONS};
+use tokio_rustls::rustls::{OwnedTrustAnchor,  ALL_VERSIONS};
 use std::str;
 use webpki_roots;
+use rustls;
 
 /// This is an example cache for client session data.
 /// It optionally dumps cached data to a file, but otherwise
@@ -57,19 +57,6 @@ impl PersistCache {
     }
 }
 
-impl rustls::client::StoresClientSessions for PersistCache {
-    /// put: insert into in-memory cache, and perhaps persist to disk.
-    fn put(&self, key: Vec<u8>, value: Vec<u8>) -> bool {
-        self.cache.lock().unwrap().insert(key, value);
-        self.save();
-        true
-    }
-
-    /// get: from in-memory cache
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        self.cache.lock().unwrap().get(key).cloned()
-    }
-}
 
 /// Find a ciphersuite with the given name
 fn find_suite(name: &str) -> Option<rustls::SupportedCipherSuite> {
@@ -100,7 +87,7 @@ fn lookup_suites(suites: &String) -> Vec<rustls::SupportedCipherSuite> {
 }
 
 /// Make a vector of protocol versions named in `versions`
-fn lookup_versions() -> Vec<&'static rustls::SupportedProtocolVersion> {
+fn lookup_versions() -> Vec<&'static tokio_rustls::rustls::SupportedProtocolVersion> {
     let version =/* vec![&rustls::version::TLS13];*/
         ALL_VERSIONS.to_vec();
 
@@ -217,8 +204,8 @@ fn apply_dangerous_options(config: &TrojanOutboundSettings, cfg: &mut rustls::Cl
     // Arc::new(tls_config)
 }*/
 
-pub fn make_config(config: &TrojanOutboundSettings) -> Arc<rustls::ClientConfig> {
-    let mut root_cert_store = rustls::RootCertStore::empty();
+pub fn make_config(config: &TrojanOutboundSettings) -> Arc<tokio_rustls::rustls::ClientConfig> {
+    let mut root_cert_store = tokio_rustls::rustls::RootCertStore::empty();
 
     root_cert_store.add_server_trust_anchors(webpki_roots::TLS_SERVER_ROOTS.0.iter().map(|ta| {
         OwnedTrustAnchor::from_subject_spki_name_constraints(
@@ -228,7 +215,7 @@ pub fn make_config(config: &TrojanOutboundSettings) -> Arc<rustls::ClientConfig>
         )
     }));
 
-    let tls_config = rustls::ClientConfig::builder()
+    let tls_config = tokio_rustls::rustls::ClientConfig::builder()
         .with_safe_defaults()
         .with_root_certificates(root_cert_store)
         .with_no_client_auth(); // i guess this was previously the default?

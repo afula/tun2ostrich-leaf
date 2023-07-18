@@ -12,7 +12,7 @@ use {
     std::sync::Arc,
     tokio_rustls::{
         rustls::{ClientConfig, OwnedTrustAnchor, RootCertStore, ServerName},
-        webpki, TlsConnector,
+       TlsConnector,
     },
 };
 

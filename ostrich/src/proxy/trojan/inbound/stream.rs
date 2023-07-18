@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+
+use indexmap::IndexMap;
 use std::io;
 use std::net::SocketAddr;
 
@@ -116,12 +117,12 @@ where
 }
 
 pub struct Handler {
-    keys: HashMap<Vec<u8>, ()>,
+    keys: IndexMap<Vec<u8>, ()>,
 }
 
 impl Handler {
     pub fn new(passwords: Vec<String>) -> Self {
-        let mut keys = HashMap::new();
+        let mut keys = IndexMap::new();
         for pass in passwords {
             let key = Sha224::digest(pass.as_bytes());
             let key = hex::encode(&key[..]);

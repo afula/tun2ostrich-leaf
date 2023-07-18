@@ -66,7 +66,7 @@ impl OutboundDatagramHandler for Handler {
         };
         let config = TlsConnector::from(self.tls_config.clone());
         // let dnsname = DNSNameRef::try_from_ascii_str(&name).map_err(tls_err)?;
-        let dnsname = rustls::ServerName::try_from(name.as_str()).map_err(|_| {
+        let dnsname = tokio_rustls::rustls::ServerName::try_from(name.as_str()).map_err(|_| {
             io::Error::new(
                 io::ErrorKind::InvalidInput,
                 format!("invalid dnsname: {:?}", &name),
