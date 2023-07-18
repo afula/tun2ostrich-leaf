@@ -119,7 +119,7 @@ impl InboundManager {
                     .arg("socks5://127.0.0.1:1086")
                     // flag.StringVar(&key.LogLevel, "loglevel", "info", "Log level [debug|info|warning|error|silent]")
                     .arg("-loglevel")
-                    .arg("info")
+                    .arg("error")
                     .spawn()
                     .expect("failed to execute process");
                 println!("init tun device process finished");
