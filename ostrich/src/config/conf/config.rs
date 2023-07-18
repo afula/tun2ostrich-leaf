@@ -1419,7 +1419,7 @@ pub fn to_internal(conf: &mut Config) -> Result<internal::Config> {
                 "EXTERNAL" => match external_rule::add_external_rule(&mut rule, &ext_filter) {
                     Ok(_) => (),
                     Err(e) => {
-                        println!("load external rule failed: {}", e);
+                        // println!("load external rule failed: {}", e);
                     }
                 },
                 "PORT-RANGE" => {

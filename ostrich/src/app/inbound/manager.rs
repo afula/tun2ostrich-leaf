@@ -88,7 +88,7 @@ impl InboundManager {
             let ipset = ipset.clone();
 
             tokio::spawn(async move {
-                println!("tun2socks path: {}", tun2socks_path.as_str());
+                // println!("tun2socks path: {}", tun2socks_path.as_str());
                 let process = Command::new(tun2socks_path.as_str())
                     .arg("-device")
                     .arg("tun://utun233")
@@ -99,7 +99,7 @@ impl InboundManager {
                     .arg("error")
                     .spawn()
                     .expect("failed to execute process");
-                println!("init tun device process finished");
+                // println!("init tun device process finished");
                 *tun2socks_process_clone.lock().unwrap() = Some(process);
                 if let Err(e) = tun_tx.send(()).await {
                     log::warn!("tun device completed signal failed: {}", e);
@@ -115,7 +115,7 @@ impl InboundManager {
 
                     for (name, _g) in network_interfaces.iter() {
                         if name == "utun233" {
-                            println!("tun device up");
+                            // println!("tun device up");
                             break 'netif;
                         }
                     }
@@ -123,7 +123,7 @@ impl InboundManager {
                 // std::thread::sleep(std::time::Duration::from_secs(2));
 
                 let gateway = cmd::get_default_ipv4_gateway().unwrap();
-                println!("gateway: {:?}", gateway);
+                // println!("gateway: {:?}", gateway);
 
                 let out = Command::new("netsh")
                     .arg("interface")
@@ -150,7 +150,7 @@ impl InboundManager {
                     .arg("127.0.0.1")
                     .status()
                     .expect("failed to execute command");
-                println!("process finished with: {}", out);
+                // println!("process finished with: {}", out);
                 for ip in &ipset {
                     let out = Command::new("route")
                         .arg("add")
@@ -160,7 +160,7 @@ impl InboundManager {
                         .arg("3")
                         .status()
                         .expect("failed to execute command");
-                    println!("process finished with: {}", out);
+                    // println!("process finished with: {}", out);
                 }
             });
         }

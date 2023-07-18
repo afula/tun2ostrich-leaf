@@ -179,7 +179,7 @@ impl OutboundDatagramRecvHalf for DatagramRecvHalf {
         let payload_len = plaintext.len() - src_addr.size();
         let to_write = min(payload_len, buf.len());
         if to_write < payload_len {
-            println!("truncated udp packet, please report this issue");
+            log::err!("truncated udp packet, please report this issue");
         }
         buf[..to_write].copy_from_slice(&plaintext[src_addr.size()..src_addr.size() + to_write]);
         if self.2.is_some() {

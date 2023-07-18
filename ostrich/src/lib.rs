@@ -64,29 +64,17 @@ pub enum Error {
 pub type Runner = futures::future::BoxFuture<'static, ()>;
 
 pub struct RuntimeManager {
-    #[cfg(feature = "auto-reload")]
-    rt_id: RuntimeId,
     config_path: Option<String>,
-    #[cfg(feature = "auto-reload")]
-    auto_reload: bool,
-    reload_tx: mpsc::Sender<std::sync::mpsc::SyncSender<Result<(), Error>>>,
     shutdown_tx: mpsc::Sender<()>,
     router: Arc<RwLock<Router>>,
     dns_client: Arc<RwLock<DnsClient>>,
     outbound_manager: Arc<RwLock<OutboundManager>>,
-    #[cfg(feature = "stat")]
-    stat_manager: SyncStatManager,
-    #[cfg(feature = "auto-reload")]
-    watcher: Mutex<Option<RecommendedWatcher>>,
 }
 
 impl RuntimeManager {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        #[cfg(feature = "auto-reload")] rt_id: RuntimeId,
         config_path: Option<String>,
-        #[cfg(feature = "auto-reload")] auto_reload: bool,
-        reload_tx: mpsc::Sender<std::sync::mpsc::SyncSender<Result<(), Error>>>,
         shutdown_tx: mpsc::Sender<()>,
         router: Arc<RwLock<Router>>,
         dns_client: Arc<RwLock<DnsClient>>,
@@ -94,20 +82,14 @@ impl RuntimeManager {
         #[cfg(feature = "stat")] stat_manager: SyncStatManager,
     ) -> Arc<Self> {
         Arc::new(Self {
-            #[cfg(feature = "auto-reload")]
-            rt_id,
+    
             config_path,
-            #[cfg(feature = "auto-reload")]
-            auto_reload,
-            reload_tx,
+
             shutdown_tx,
             router,
             dns_client,
             outbound_manager,
-            #[cfg(feature = "stat")]
-            stat_manager,
-            #[cfg(feature = "auto-reload")]
-            watcher: Mutex::new(None),
+
         })
     }
 
@@ -198,10 +180,10 @@ pub fn start(
     #[cfg(target_os = "windows")] wintun_path: String,
     #[cfg(target_os = "windows")] tun2socks_path: String,
 ) -> Result<(), Error> {
-    #[cfg(debug_assertions)]
-    println!("start with options:\n{:#?}", opts);
+    // #[cfg(debug_assertions)]
+    // println!("start with options:\n{:#?}", opts);
 
-    let (reload_tx, mut reload_rx) = mpsc::channel(1);
+    // let (reload_tx, mut reload_rx) = mpsc::channel(1);
     let (shutdown_tx, mut shutdown_rx) = mpsc::channel(1);
 
     let config_path = match opts.config {
@@ -556,7 +538,7 @@ pub fn start(
             let mut if_set = IfWatcher::new().unwrap();
             use futures::StreamExt;
             while let Some(Ok(if_event)) = if_set.next().await {
-                println!("network ifterface event: {:?}", if_event);
+                // println!("network ifterface event: {:?}", if_event);
                 match if_event {
                     IfEvent::Up(ip) => {
                         if ip.addr().is_ipv4()
@@ -591,7 +573,7 @@ pub fn start(
                                 .arg("172.7.0.1")
                                 .status()
                                 .expect("failed to execute command");
-                            println!("route delete command finished with: {}", out);
+                            // println!("route delete command finished with: {}", out);
                             // tokio::time::sleep(std::time::Duration::from_secs(2)).await;
                             match cmd::get_default_ipv4_gateway() {
                                 Ok(gw) => {
@@ -618,7 +600,7 @@ pub fn start(
                                         .arg("127.0.0.1")
                                         .status()
                                         .expect("failed to execute command");
-                                    println!("setup tun device command finished with: {}", out);
+                                    // println!("setup tun device command finished with: {}", out);
                                     for v in &ipset {
                                         let out = Command::new("route")
                                             .arg("add")
@@ -628,11 +610,11 @@ pub fn start(
                                             .arg("3")
                                             .status()
                                             .expect("failed to execute command");
-                                        println!("route add command finished with: {}", out);
+                                        // println!("route add command finished with: {}", out);
                                     }
                                 }
                                 Err(e) => {
-                                    println!("network changed,cant get gateway:{:?}", e);
+                                    // println!("network changed,cant get gateway:{:?}", e);
                                     continue;
                                 }
                             }
@@ -650,12 +632,7 @@ pub fn start(
     sys::post_tun_creation_setup(&net_info);*/
 
     let runtime_manager = RuntimeManager::new(
-        #[cfg(feature = "auto-reload")]
-        rt_id,
         config_path,
-        #[cfg(feature = "auto-reload")]
-        opts.auto_reload,
-        reload_tx,
         shutdown_tx,
         router,
         dns_client,

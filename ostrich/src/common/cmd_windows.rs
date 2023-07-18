@@ -14,7 +14,7 @@ pub fn get_default_ipv4_gateway() -> Result<String> {
 
 pub fn get_default_ipv6_gateway() -> Result<String> {
     let gateway = get_default_ipv4_gateway()?;
-    println!("ipv4 gateway: {:?}", gateway);
+    // println!("ipv4 gateway: {:?}", gateway);
     let mut ipv6_gateway = String::default();
 
     let mut adapters = ipconfig::get_adapters()?;
@@ -28,7 +28,7 @@ pub fn get_default_ipv6_gateway() -> Result<String> {
             }
         }
     }
-    println!("ipv6 gateway: {:?}", &ipv6_gateway);
+    // println!("ipv6 gateway: {:?}", &ipv6_gateway);
     Ok(ipv6_gateway)
 }
 

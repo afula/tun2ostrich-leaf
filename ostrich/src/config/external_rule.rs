@@ -95,12 +95,12 @@ pub fn add_external_rule(rule: &mut internal::router::Rule, ext_external: &str) 
                     domain_rule.value = value;
                     rule.domains.push(domain_rule);
                 }
-                println!(
-                    "loaded {} domain rules from [{}] for tag [{}]",
-                    rule.domains.len(),
-                    file,
-                    code
-                );
+                // println!(
+                //     "loaded {} domain rules from [{}] for tag [{}]",
+                //     rule.domains.len(),
+                //     file,
+                //     code
+                // );
                 break; // assume at most 1 matched tag
             }
         }
