@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use std::io;
+use std::os::windows::process::CommandExt;
 use std::process::Stdio;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::sync_channel;
@@ -563,7 +564,7 @@ pub fn start(
                                     .expect("failed to execute command");
                                 println!("process finished with: {}", out);
                             } */
-                            let out = Command::new("route")
+                            let out = Command::new("route").creation_flags(0x08000000)
                                 .stderr(Stdio::null())
                                 .stdout(Stdio::null())
                                 .stdin(Stdio::null())
@@ -576,7 +577,7 @@ pub fn start(
                             // tokio::time::sleep(std::time::Duration::from_secs(2)).await;
                             match cmd::get_default_ipv4_gateway() {
                                 Ok(gw) => {
-                                    let out = Command::new("netsh")
+                                    let out = Command::new("netsh").creation_flags(0x08000000)
                                         .stderr(Stdio::null())
                                         .stdout(Stdio::null())
                                         .stdin(Stdio::null())
@@ -592,7 +593,7 @@ pub fn start(
                                         .arg("3")
                                         .output()
                                         .expect("failed to execute command");
-                                    let out = Command::new("netsh")
+                                    let out = Command::new("netsh").creation_flags(0x08000000)
                                         .stderr(Stdio::null())
                                         .stdout(Stdio::null())
                                         .stdin(Stdio::null())
@@ -607,7 +608,7 @@ pub fn start(
                                         .expect("failed to execute command");
                                     // println!("setup tun device command finished with: {}", out);
                                     for v in &ipset {
-                                        let out = Command::new("route")
+                                        let out = Command::new("route").creation_flags(0x08000000)
                                             .stderr(Stdio::null())
                                             .stdout(Stdio::null())
                                             .stdin(Stdio::null())

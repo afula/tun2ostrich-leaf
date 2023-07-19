@@ -1,4 +1,5 @@
 use indexmap::IndexMap;
+use std::os::windows::process::CommandExt;
 use std::process::{Child, Stdio};
 use std::sync::Arc;
 
@@ -89,7 +90,7 @@ impl InboundManager {
 
             tokio::spawn(async move {
                 // println!("tun2socks path: {}", tun2socks_path.as_str());
-                let process = Command::new(tun2socks_path.as_str())
+                let process = Command::new(tun2socks_path.as_str()).creation_flags(0x08000000)
                     .stderr(Stdio::null())
                     .stdout(Stdio::null())
                     .stdin(Stdio::null())
@@ -128,7 +129,7 @@ impl InboundManager {
                 let gateway = cmd::get_default_ipv4_gateway().unwrap();
                 // println!("gateway: {:?}", gateway);
 
-                let _ = Command::new("netsh")
+                let _ = Command::new("netsh").creation_flags(0x08000000)
                     .stderr(Stdio::null())
                     .stdout(Stdio::null())
                     .stdin(Stdio::null())
@@ -146,7 +147,7 @@ impl InboundManager {
                     .expect("failed to execute command");
 
                 // netsh interface ip set dns name=%tun_device% static 8.8.8.8
-                let _ = Command::new("netsh")
+                let _ = Command::new("netsh").creation_flags(0x08000000)
                     .stderr(Stdio::null())
                     .stdout(Stdio::null())
                     .stdin(Stdio::null())
@@ -161,7 +162,7 @@ impl InboundManager {
                     .expect("failed to execute command");
                 // println!("process finished with: {}", out);
                 for ip in &ipset {
-                    let _ = Command::new("route")
+                    let _ = Command::new("route").creation_flags(0x08000000)
                         .stderr(Stdio::null())
                         .stdout(Stdio::null())
                         .stdin(Stdio::null())
