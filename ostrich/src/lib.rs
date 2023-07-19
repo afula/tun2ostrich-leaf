@@ -570,7 +570,7 @@ pub fn start(
                                 .arg("delete")
                                 .arg("0.0.0.0")
                                 .arg("172.7.0.1")
-                                .status()
+                                .output()
                                 .expect("failed to execute command");
                             // println!("route delete command finished with: {}", out);
                             // tokio::time::sleep(std::time::Duration::from_secs(2)).await;
@@ -590,7 +590,7 @@ pub fn start(
                                         .arg("255.255.255.0")
                                         .arg("172.7.0.1")
                                         .arg("3")
-                                        .status()
+                                        .output()
                                         .expect("failed to execute command");
                                     let out = Command::new("netsh")
                                         .stderr(Stdio::null())
@@ -603,7 +603,7 @@ pub fn start(
                                         .arg("name=utun233")
                                         .arg("static")
                                         .arg("127.0.0.1")
-                                        .status()
+                                        .output()
                                         .expect("failed to execute command");
                                     // println!("setup tun device command finished with: {}", out);
                                     for v in &ipset {
@@ -616,7 +616,7 @@ pub fn start(
                                             .arg(&gw)
                                             .arg("metric")
                                             .arg("3")
-                                            .status()
+                                            .output()
                                             .expect("failed to execute command");
                                         // println!("route add command finished with: {}", out);
                                     }

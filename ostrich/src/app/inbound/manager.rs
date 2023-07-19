@@ -128,7 +128,7 @@ impl InboundManager {
                 let gateway = cmd::get_default_ipv4_gateway().unwrap();
                 // println!("gateway: {:?}", gateway);
 
-                Command::new("netsh")
+                let _ = Command::new("netsh")
                     .stderr(Stdio::null())
                     .stdout(Stdio::null())
                     .stdin(Stdio::null())
@@ -142,11 +142,11 @@ impl InboundManager {
                     .arg("255.255.255.0")
                     .arg("172.7.0.1")
                     .arg("3")
-                    .status()
+                    .output()
                     .expect("failed to execute command");
 
                 // netsh interface ip set dns name=%tun_device% static 8.8.8.8
-                Command::new("netsh")
+                let _ = Command::new("netsh")
                     .stderr(Stdio::null())
                     .stdout(Stdio::null())
                     .stdin(Stdio::null())
@@ -157,11 +157,11 @@ impl InboundManager {
                     .arg("name=utun233")
                     .arg("static")
                     .arg("127.0.0.1")
-                    .status()
+                    .output()
                     .expect("failed to execute command");
                 // println!("process finished with: {}", out);
                 for ip in &ipset {
-                    Command::new("route")
+                    let _ = Command::new("route")
                         .stderr(Stdio::null())
                         .stdout(Stdio::null())
                         .stdin(Stdio::null())
@@ -170,7 +170,7 @@ impl InboundManager {
                         .arg(&gateway)
                         .arg("metric")
                         .arg("3")
-                        .status()
+                        .output()
                         .expect("failed to execute command");
                     // println!("process finished with: {}", out);
                 }
