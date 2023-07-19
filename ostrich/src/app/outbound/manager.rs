@@ -1,11 +1,9 @@
-use std::{
-    convert::From,
-};
-use indexmap::{map::Values,IndexMap};
 use anyhow::{anyhow, Result};
 use futures::future::AbortHandle;
+use indexmap::{map::Values, IndexMap};
 use log::*;
 use protobuf::Message;
+use std::convert::From;
 
 #[cfg(feature = "outbound-direct")]
 use crate::proxy::direct;
@@ -13,14 +11,12 @@ use crate::proxy::direct;
 #[cfg(feature = "outbound-trojan")]
 use crate::proxy::trojan;
 
-
 use crate::proxy::trojan::outbound::tls::make_config;
 use crate::{
     app::SyncDnsClient,
     config::{self, Outbound},
     proxy::{outbound::HandlerBuilder, *},
 };
-
 
 pub struct OutboundManager {
     handlers: IndexMap<String, AnyOutboundHandler>,
@@ -170,7 +166,6 @@ impl OutboundManager {
             inner: self.handlers.values(),
         }
     }
-
 }
 
 pub struct Handlers<'a> {

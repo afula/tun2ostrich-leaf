@@ -11,5 +11,4 @@ mod network_listener;
 ))]
 mod tun_listener;
 
-
 pub mod manager;

@@ -1,5 +1,5 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 use anyhow::Result;
 
@@ -43,6 +43,9 @@ pub fn get_default_ipv6_address() -> Result<String> {
 pub fn get_default_interface() -> Result<String> {
     let if_idx = get_default_ipv4_interface_index()?;
     let out = Command::new("netsh")
+        .stderr(Stdio::null())
+        .stdout(Stdio::null())
+        .stdin(Stdio::null())
         .arg("interface")
         .arg("ipv4")
         .arg("show")
@@ -72,6 +75,9 @@ pub fn add_interface_ipv4_address(
     mask: Ipv4Addr,
 ) -> Result<()> {
     let out = Command::new("netsh")
+        .stderr(Stdio::null())
+        .stdout(Stdio::null())
+        .stdin(Stdio::null())
         .arg("interface")
         .arg("ipv4")
         .arg("set")
@@ -89,6 +95,9 @@ pub fn add_interface_ipv4_address(
 
 pub fn add_interface_ipv6_address(name: &str, addr: Ipv6Addr, prefixlen: i32) -> Result<()> {
     let out = Command::new("netsh")
+        .stderr(Stdio::null())
+        .stdout(Stdio::null())
+        .stdin(Stdio::null())
         .arg("interface")
         .arg("ipv6")
         .arg("set")
@@ -113,6 +122,9 @@ pub fn add_default_ipv4_route(gateway: Ipv4Addr, interface: String, primary: boo
 
     let metric = if primary { "metric=1" } else { "" };
     Command::new("netsh")
+        .stderr(Stdio::null())
+        .stdout(Stdio::null())
+        .stdin(Stdio::null())
         .arg("interface")
         .arg("ipv4")
         .arg("add")
@@ -129,6 +141,9 @@ pub fn add_default_ipv4_route(gateway: Ipv4Addr, interface: String, primary: boo
 pub fn add_default_ipv6_route(gateway: Ipv6Addr, interface: String, primary: bool) -> Result<()> {
     let if_idx = get_interface_index(interface.as_str())?;
     Command::new("netsh")
+        .stderr(Stdio::null())
+        .stdout(Stdio::null())
+        .stdin(Stdio::null())
         .arg("interface")
         .arg("ipv6")
         .arg("add")
@@ -145,6 +160,9 @@ pub fn delete_default_ipv6_route(ifscope: Option<String>) -> Result<()> {
     if let Some(scope) = ifscope {
         let if_idx = get_interface_index(scope.as_str())?;
         let out = Command::new("netsh")
+            .stderr(Stdio::null())
+            .stdout(Stdio::null())
+            .stdin(Stdio::null())
             .arg("interface")
             .arg("ipv4")
             .arg("delete")
@@ -156,6 +174,9 @@ pub fn delete_default_ipv6_route(ifscope: Option<String>) -> Result<()> {
             .output()?;
     } else {
         let out = Command::new("route")
+            .stderr(Stdio::null())
+            .stdout(Stdio::null())
+            .stdin(Stdio::null())
             .arg("-6")
             .arg("delete")
             .arg("::/0")
@@ -168,6 +189,9 @@ pub fn delete_default_ipv4_route(ifscope: Option<String>) -> Result<()> {
     if let Some(scope) = ifscope {
         let if_idx = get_interface_index(scope.as_str())?;
         let out = Command::new("netsh")
+            .stderr(Stdio::null())
+            .stdout(Stdio::null())
+            .stdin(Stdio::null())
             .arg("interface")
             .arg("ipv4")
             .arg("delete")
@@ -179,6 +203,9 @@ pub fn delete_default_ipv4_route(ifscope: Option<String>) -> Result<()> {
             .output()?;
     } else {
         let out = Command::new("route")
+            .stderr(Stdio::null())
+            .stdout(Stdio::null())
+            .stdin(Stdio::null())
             .arg("-4")
             .arg("delete")
             .arg("0.0.0.0/0")
@@ -243,6 +270,9 @@ fn get_default_ipv4_interface_index() -> Result<String> {
 
 fn get_default_ipv6_route_entry() -> Result<String> {
     let out = Command::new("netsh")
+        .stderr(Stdio::null())
+        .stdout(Stdio::null())
+        .stdin(Stdio::null())
         .arg("interface")
         .arg("ipv6")
         .arg("show")
@@ -277,6 +307,9 @@ fn get_interface_indices() -> Result<Vec<String>> {
 
 fn get_interface_entries() -> Result<Vec<Vec<String>>> {
     let out = Command::new("netsh")
+        .stderr(Stdio::null())
+        .stdout(Stdio::null())
+        .stdin(Stdio::null())
         .arg("interface")
         .arg("ip")
         .arg("show")
@@ -302,6 +335,9 @@ fn get_interface_entries() -> Result<Vec<Vec<String>>> {
 
 fn get_ipv4_route_entries() -> Result<Vec<Vec<String>>> {
     let out = Command::new("netsh")
+        .stderr(Stdio::null())
+        .stdout(Stdio::null())
+        .stdin(Stdio::null())
         .arg("interface")
         .arg("ipv4")
         .arg("show")

@@ -1,9 +1,7 @@
-
-use std::sync::Arc;
 use crate::config::TrojanOutboundSettings;
+use std::sync::Arc;
 use tokio_rustls::rustls::OwnedTrustAnchor;
 use webpki_roots;
-
 
 pub fn make_config(config: &TrojanOutboundSettings) -> Arc<tokio_rustls::rustls::ClientConfig> {
     let mut root_cert_store = tokio_rustls::rustls::RootCertStore::empty();

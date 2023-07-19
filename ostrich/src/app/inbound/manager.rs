@@ -1,15 +1,15 @@
 use indexmap::IndexMap;
-use std::process::Child;
+use std::process::{Child, Stdio};
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
 
 use crate::app::dispatcher::Dispatcher;
 use crate::app::nat_manager::NatManager;
+use crate::config;
 use crate::proxy;
 use crate::proxy::AnyInboundHandler;
 use crate::Runner;
-use crate::{config};
 use std::sync::Mutex;
 
 use super::network_listener::NetworkInboundListener;
@@ -66,8 +66,8 @@ impl InboundManager {
         #[cfg(target_os = "windows")] tun2socks_path: String,
     ) -> Result<Self> {
         let mut handlers: IndexMap<String, AnyInboundHandler> = IndexMap::new();
-        let mut tun2socks_process = Arc::new(Mutex::new(None));
-        let mut tun2socks_process_clone = tun2socks_process.clone();
+        let tun2socks_process = Arc::new(Mutex::new(None));
+        let tun2socks_process_clone = tun2socks_process.clone();
         let tag = String::from("socks_in");
 
         let stream = Arc::new(socks::inbound::StreamHandler);
@@ -90,6 +90,9 @@ impl InboundManager {
             tokio::spawn(async move {
                 // println!("tun2socks path: {}", tun2socks_path.as_str());
                 let process = Command::new(tun2socks_path.as_str())
+                    .stderr(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stdin(Stdio::null())
                     .arg("-device")
                     .arg("tun://utun233")
                     .arg("-proxy")
@@ -125,7 +128,10 @@ impl InboundManager {
                 let gateway = cmd::get_default_ipv4_gateway().unwrap();
                 // println!("gateway: {:?}", gateway);
 
-                let out = Command::new("netsh")
+                Command::new("netsh")
+                    .stderr(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stdin(Stdio::null())
                     .arg("interface")
                     .arg("ip")
                     .arg("set")
@@ -140,7 +146,10 @@ impl InboundManager {
                     .expect("failed to execute command");
 
                 // netsh interface ip set dns name=%tun_device% static 8.8.8.8
-                let out = Command::new("netsh")
+                Command::new("netsh")
+                    .stderr(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stdin(Stdio::null())
                     .arg("interface")
                     .arg("ip")
                     .arg("set")
@@ -152,7 +161,10 @@ impl InboundManager {
                     .expect("failed to execute command");
                 // println!("process finished with: {}", out);
                 for ip in &ipset {
-                    let out = Command::new("route")
+                    Command::new("route")
+                        .stderr(Stdio::null())
+                        .stdout(Stdio::null())
+                        .stdin(Stdio::null())
                         .arg("add")
                         .arg(ip)
                         .arg(&gateway)

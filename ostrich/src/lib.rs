@@ -1,7 +1,8 @@
 use anyhow::anyhow;
-use lazy_static::lazy_static;
 use indexmap::IndexMap;
+use lazy_static::lazy_static;
 use std::io;
+use std::process::Stdio;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::sync_channel;
 use std::sync::Arc;
@@ -14,7 +15,6 @@ use app::{
     dispatcher::Dispatcher, dns_client::DnsClient, inbound::manager::InboundManager,
     nat_manager::NatManager, outbound::manager::OutboundManager, router::Router,
 };
-
 
 pub mod app;
 pub mod common;
@@ -82,14 +82,12 @@ impl RuntimeManager {
         #[cfg(feature = "stat")] stat_manager: SyncStatManager,
     ) -> Arc<Self> {
         Arc::new(Self {
-    
             config_path,
 
             shutdown_tx,
             router,
             dns_client,
             outbound_manager,
-
         })
     }
 
@@ -118,8 +116,6 @@ lazy_static! {
     pub static ref RUNTIME_MANAGER: Mutex<IndexMap<RuntimeId, Arc<RuntimeManager>>> =
         Mutex::new(IndexMap::new());
 }
-
-
 
 pub fn shutdown() -> bool {
     if let Some(m) = RUNTIME_MANAGER.lock().unwrap().get(&INSTANCE_ID) {
@@ -568,6 +564,9 @@ pub fn start(
                                 println!("process finished with: {}", out);
                             } */
                             let out = Command::new("route")
+                                .stderr(Stdio::null())
+                                .stdout(Stdio::null())
+                                .stdin(Stdio::null())
                                 .arg("delete")
                                 .arg("0.0.0.0")
                                 .arg("172.7.0.1")
@@ -578,6 +577,9 @@ pub fn start(
                             match cmd::get_default_ipv4_gateway() {
                                 Ok(gw) => {
                                     let out = Command::new("netsh")
+                                        .stderr(Stdio::null())
+                                        .stdout(Stdio::null())
+                                        .stdin(Stdio::null())
                                         .arg("interface")
                                         .arg("ip")
                                         .arg("set")
@@ -591,6 +593,9 @@ pub fn start(
                                         .status()
                                         .expect("failed to execute command");
                                     let out = Command::new("netsh")
+                                        .stderr(Stdio::null())
+                                        .stdout(Stdio::null())
+                                        .stdin(Stdio::null())
                                         .arg("interface")
                                         .arg("ip")
                                         .arg("set")
@@ -603,6 +608,9 @@ pub fn start(
                                     // println!("setup tun device command finished with: {}", out);
                                     for v in &ipset {
                                         let out = Command::new("route")
+                                            .stderr(Stdio::null())
+                                            .stdout(Stdio::null())
+                                            .stdin(Stdio::null())
                                             .arg("add")
                                             .arg(v)
                                             .arg(&gw)
@@ -668,7 +676,7 @@ pub fn start(
     }
 
     drop(config); // explicitly free the memory
-    // The main task joining all runners.
+                  // The main task joining all runners.
     tasks.push(Box::pin(async move {
         futures::future::join_all(runners).await;
     }));

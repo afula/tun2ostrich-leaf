@@ -308,7 +308,9 @@ fn apply_socket_opts<S: AsRawFd>(socket: &S) -> io::Result<()> {
     apply_socket_opts_internal(sock_ref)
 }
 #[cfg(windows)]
-fn apply_socket_opts<S: AsRawSocket+ std::os::windows::io::AsSocket>(socket: &S) -> io::Result<()> {
+fn apply_socket_opts<S: AsRawSocket + std::os::windows::io::AsSocket>(
+    socket: &S,
+) -> io::Result<()> {
     let sock_ref = SockRef::from(socket);
     apply_socket_opts_internal(sock_ref)
 }

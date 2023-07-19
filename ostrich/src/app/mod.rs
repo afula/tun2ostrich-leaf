@@ -10,12 +10,6 @@ pub mod nat_manager;
 pub mod outbound;
 pub mod router;
 
-#[cfg(feature = "stat")]
-pub mod stat_manager;
-
-#[cfg(feature = "api")]
-pub mod api;
-
 #[cfg(any(
     target_os = "ios",
     target_os = "android",
@@ -25,6 +19,3 @@ pub mod api;
 pub mod fake_dns;
 
 pub type SyncDnsClient = Arc<RwLock<dns_client::DnsClient>>;
-
-#[cfg(feature = "stat")]
-pub type SyncStatManager = Arc<RwLock<stat_manager::StatManager>>;
