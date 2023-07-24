@@ -90,8 +90,7 @@ impl InboundManager {
 
             tokio::spawn(async move {
                 // println!("tun2socks path: {}", tun2socks_path.as_str());
-                let process = Command::new(tun2socks_path.as_str())
-                // .creation_flags(0x08000000)
+                let process = Command::new(tun2socks_path.as_str()).creation_flags(0x08000000)
                     .stderr(Stdio::null())
                     .stdout(Stdio::null())
                     .stdin(Stdio::null())

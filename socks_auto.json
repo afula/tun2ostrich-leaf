@@ -1,0 +1,67 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "dns": {
+    "servers": [
+      "1.1.1.1"
+    ],
+    "hosts": {
+        "ostrich.services":[
+      "141.164.36.251"
+    ]}
+  },
+  "inbounds": [
+    {
+      "protocol": "socks",
+      "address": "127.0.0.1",
+      "port": 1086,
+      "tag": "socks_in"
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "trojan",
+      "settings": {
+        "server_name": "ostrich.services",
+	    "address": "141.164.36.251",
+        "password": "c33b9cd8",
+        "port": 443,
+        "alpn": [
+          "http/1.1"
+        ],
+        "suites": "TLS13_AES_256_GCM_SHA384:TLS13_AES_128_GCM_SHA256:TLS13_CHACHA20_POLY1305_SHA256"
+      },
+      "tag": "proxy_out"
+    },
+    {
+      "protocol": "direct",
+      "tag": "direct_out"
+    }
+  ],
+  "router": {
+    "domainResolve": true,
+    "rules": [
+      {
+        "ip": [
+          "1.1.1.1",
+          "1.0.0.1",
+          "8.8.8.8",
+          "8.8.4.4",
+          "9.9.9.9",
+          "149.112.112.112",
+          "208.67.222.222",
+          "208.67.220.220",
+          "64.6.64.6",
+          "64.6.65.6",
+          "91.239.100.100",
+          "89.233.43.71",
+          "84.200.69.80",
+          "84.200.70.40",
+          "158.247.219.199"
+        ],
+        "target": "direct_out"
+      }
+    ]
+  }
+}

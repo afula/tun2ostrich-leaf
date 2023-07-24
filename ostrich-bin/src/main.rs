@@ -87,9 +87,9 @@ fn main() {
     }
     let path = std::env::current_dir().unwrap();
     #[cfg(target_os = "windows")]
-    let wintun_path = "C:\\Users\\nancy\\.ostrichConfig\\wintun.dll";
+    let wintun_path = "C:\\Users\\nancy\\.ostrich\\assets\\wintun.dll";
     #[cfg(target_os = "windows")]
-    let tun2socks_path = "C:\\Users\\nancy\\.ostrichConfig\\tun2socks.exe";
+    let tun2socks_path = "C:\\Users\\nancy\\.ostrich\\assets\\tun2socks.exe";
     #[cfg(target_os = "linux")]
     let tun2socks_path = format!(
         "{}/assets/linux/tun2socks",
