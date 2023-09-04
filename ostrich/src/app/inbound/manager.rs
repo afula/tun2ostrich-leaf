@@ -90,17 +90,18 @@ impl InboundManager {
 
             tokio::spawn(async move {
                 // println!("tun2socks path: {}", tun2socks_path.as_str());
-                let process = Command::new(tun2socks_path.as_str()).creation_flags(0x08000000)
-                    .stderr(Stdio::null())
-                    .stdout(Stdio::null())
-                    .stdin(Stdio::null())
+                let process = Command::new(tun2socks_path.as_str())
+                // .creation_flags(0x08000000)
+                    // .stderr(Stdio::null())
+                    // .stdout(Stdio::null())
+                    // .stdin(Stdio::null())
                     .arg("-device")
                     .arg("tun://utun233")
                     .arg("-proxy")
                     .arg("socks5://127.0.0.1:1086")
                     // flag.StringVar(&key.LogLevel, "loglevel", "info", "Log level [debug|info|warning|error|silent]")
                     .arg("-loglevel")
-                    .arg("error")
+                    .arg("debug")
                     .spawn()
                     .expect("failed to execute process");
                 // println!("init tun device process finished");
